@@ -254,5 +254,69 @@ sub Percolate {
     }
   }
 }
+#code to see neighbors of selected tile and also function for uncover all mines when game gets over 
 
+sub Neighbors {
+  my ($i,$j) = @_;
+  my @neighbors = ();
+
+  
+  my $offsets = AllPairs([-1..1],[-1..1]);
+  while(my ($s, $t) = $offsets->()) {
+    
+    if(($s != 0 || $t != 0) &&
+       ($i+$s >= 0) && ($i+$s < $x) &&
+       ($j+$t >= 0) && ($j+$t < $y) ) {
+      push @neighbors, $i+$s;
+      push @neighbors, $j+$t;
+    }
+  }
+
+  my $i_ = 0;
+  my $j_ = 1;
+  sub { return unless($i_ < @neighbors);
+        my $x_ = $neighbors[$i_]; $i_ += 2;
+        my $y_ = $neighbors[$j_]; $j_ += 2;
+        return ($x_, $y_);
+  }
+}
+
+sub UncoverAllMines {
+  my $all = AllPairs([0..$x-1], [0..$y-1]);
+  while(my ($i, $j) = $all->()) {
+    if($values{$i}{$j} == -1) {
+      UncoverTile($i, $j, $mineChar);
+    }
+  }
+}
+
+sub Check {
+  my ($i, $j) = @_;
+
+  my $value = $values{$i}{$j};
+
+  
+  if($value == -1) {
+    UncoverAllMines();              
+    UncoverTile($i, $j, $boomChar); 
+
+    my $answer = $mw->messageBox(-title => 'BOOOOOOOOOOM!',
+                                 -message => "A nuclear blast whiped you from the face of earth...\nPlay again?",
+                                 -type => 'yesno', -icon => 'error', -default => 'yes');
+    if ($answer eq 'Yes') {
+      InitGame();
+    }
+    else {
+      exit;
+    }
+  }
+  
+  elsif($value > 0) {
+    UncoverTile($i,$j);
+  }
+  
+  else {
+    Percolate($i,$j);
+  }
+}
 
